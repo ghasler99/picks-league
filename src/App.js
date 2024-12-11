@@ -34,42 +34,62 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
+      <header style={{ padding: '20px', textAlign: 'center', background: '#f0f0f0' }}>
         <h1>Picks League</h1>
       </header>
       
-      <main className="container mx-auto p-4">
+      <main style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
         <div className="games-list">
           {games.map(game => (
-            <div key={game.id} className="game-card p-4 mb-4 border rounded">
-              <div className="flex justify-between mb-2">
+            <div key={game.id} style={{ 
+              padding: '20px', 
+              marginBottom: '20px', 
+              border: '1px solid #ddd',
+              borderRadius: '8px'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                marginBottom: '10px'
+              }}>
                 <span>{game.homeTeam} vs {game.awayTeam}</span>
                 <span>{new Date(game.startTime).toLocaleString()}</span>
               </div>
               
-              <div className="pick-buttons">
+              <div>
                 <button
                   onClick={() => handlePick(game.id, game.homeTeam)}
                   disabled={isGameLocked(game.startTime)}
-                  className={`mr-2 px-4 py-2 rounded ${
-                    picks[game.id] === game.homeTeam ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                  }`}
+                  style={{
+                    marginRight: '10px',
+                    padding: '8px 16px',
+                    background: picks[game.id] === game.homeTeam ? '#007bff' : '#e9ecef',
+                    color: picks[game.id] === game.homeTeam ? 'white' : 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   {game.homeTeam}
                 </button>
                 <button
                   onClick={() => handlePick(game.id, game.awayTeam)}
                   disabled={isGameLocked(game.startTime)}
-                  className={`px-4 py-2 rounded ${
-                    picks[game.id] === game.awayTeam ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                  }`}
+                  style={{
+                    padding: '8px 16px',
+                    background: picks[game.id] === game.awayTeam ? '#007bff' : '#e9ecef',
+                    color: picks[game.id] === game.awayTeam ? 'white' : 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
                   {game.awayTeam}
                 </button>
               </div>
               
               {isGameLocked(game.startTime) && (
-                <div className="mt-2 text-red-500">
+                <div style={{ marginTop: '10px', color: 'red' }}>
                   Game locked - picks can no longer be changed
                 </div>
               )}

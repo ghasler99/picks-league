@@ -7,12 +7,13 @@ import { doc, setDoc, getDoc, onSnapshot, collection } from 'firebase/firestore'
 function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [games, setGames] = useState([]);
+  const [allGames, setAllGames] = useState({});
   const [picks, setPicks] = useState({});
   const [currentRound, setCurrentRound] = useState('round1');
   const [view, setView] = useState('picks');
   const [userPicks, setUserPicks] = useState({});
   const [userData, setUserData] = useState({});
+
 
   // Load user's data and check admin status when they log in
   useEffect(() => {
@@ -68,18 +69,21 @@ function App() {
 
   // Load games from Firestore based on current round
   useEffect(() => {
-    const gamesRef = doc(db, 'games', currentRound);
-    const unsubscribe = onSnapshot(gamesRef, (doc) => {
-      if (doc.exists()) {
-        const gamesData = doc.data().games || [];
-        setGames(gamesData);
-      } else {
-        setGames([]);
-      }
+    const rounds = ['round1', 'round2', 'round3', 'round4', 'nfl'];
+    const unsubscribers = rounds.map(roundId => {
+      const gamesRef = doc(db, 'games', roundId);
+      return onSnapshot(gamesRef, (doc) => {
+        if (doc.exists()) {
+          setAllGames(prev => ({
+            ...prev,
+            [roundId]: doc.data().games || []
+          }));
+        }
+      });
     });
-
-    return () => unsubscribe();
-  }, [currentRound]);
+  
+    return () => unsubscribers.forEach(unsub => unsub());
+  }, []);
 
   const handlePick = async (gameId, team) => {
     if (!user) return;
@@ -117,20 +121,22 @@ function App() {
     return currentCST >= gameTime;
   };
 
-  const calculatePoints = (userId) => {
+  const calculatePoints = (userId, category = 'total') => {
     let totalPoints = 0;
     const userPickData = userPicks[userId];
     
     if (!userPickData) return 0;
   
     Object.keys(userPickData.picks).forEach(round => {
+      if (category === 'college' && round === 'nfl') return;
+      if (category === 'nfl' && round !== 'nfl') return;
+      
       const roundPicks = userPickData.picks[round];
       if (!roundPicks) return;
   
       if (round === 'nfl') {
-        // For NFL round, add confidence points if pick is correct
         Object.keys(roundPicks).forEach(gameId => {
-          const game = games.find(g => g.id.toString() === gameId.toString());
+          const game = allGames[round]?.find(g => g.id.toString() === gameId.toString());
           if (game && game.winner) {
             if (roundPicks[gameId].team === game.winner) {
               totalPoints += roundPicks[gameId].points;
@@ -138,9 +144,8 @@ function App() {
           }
         });
       } else {
-        // Original points calculation for other rounds
         Object.keys(roundPicks).forEach(gameId => {
-          const game = games.find(g => g.id.toString() === gameId.toString());
+          const game = allGames[round]?.find(g => g.id.toString() === gameId.toString());
           if (game && game.winner) {
             if (roundPicks[gameId] === game.winner) {
               totalPoints += (game.points || 1);
@@ -343,6 +348,19 @@ function App() {
                   Round 3
                 </button>
                 <button
+                  onClick={() => setCurrentRound('round4')}
+                  style={{
+                    padding: '8px 16px',
+                    background: currentRound === 'round4' ? '#28a745' : '#e9ecef',
+                    color: currentRound === 'round4' ? 'white' : 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Round 4
+                </button>
+                <button
                   onClick={() => setCurrentRound('nfl')}
                   style={{
                     padding: '8px 16px',
@@ -364,7 +382,7 @@ function App() {
               <AdminPanel />
             ) : view === 'picks' ? (
               <div className="games-list">
-                {games.map(game => (
+                {(allGames[currentRound] || []).map(game => (
                   currentRound === 'nfl' ? (
                     <div key={game.id} style={{ 
                       padding: '20px', 
@@ -476,7 +494,6 @@ function App() {
                         </span>
                         <div style={{ textAlign: 'right' }}>
                           <div>{new Date(game.startTime).toLocaleString('en-US')} CST</div>
-
                           {isGameLocked(game.startTime) && (
                             <div style={{ color: '#dc3545', fontSize: '20px', marginTop: '5px' }}>
                               🔒
@@ -529,48 +546,54 @@ function App() {
                 borderRadius: '8px'
               }}>
                 <h2 style={{ marginBottom: '20px' }}>All Picks - {currentRound}</h2>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr>
-                        <th style={tableHeaderStyle}>User</th>
-                        {games.map(game => (
-                          <th key={game.id} style={tableHeaderStyle}>
-                            {game.homeTeam} vs {game.awayTeam}
-                            {currentRound !== 'nfl' && (
-                              <div style={{ fontSize: '0.8em', color: '#666' }}>
-                                ({game.points || 1} pts)
-                              </div>
-                            )}
-                            {!isGameLocked(game.startTime) && (
-                              <div style={{ fontSize: '0.8em', color: '#dc3545' }}>
-                                Picks hidden until game starts
-                              </div>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(userPicks).map(([userId, userData]) => (
-                        <tr key={userId}>
-                          <td style={tableCellStyle}>
-                            {userData.displayName || userData.username}
-                          </td>
-                          {games.map(game => (
-                            <td key={game.id} style={tableCellStyle}>
-                              {isGameLocked(game.startTime) 
-                                ? currentRound === 'nfl'
-                                  ? `${userData.picks[currentRound]?.[game.id]?.team || '-'} (${userData.picks[currentRound]?.[game.id]?.points || '-'})`
-                                  : (userData.picks[currentRound]?.[game.id] || '-')
-                                : '🔒'}
-                            </td>
+                {allGames[currentRound]?.length > 0 ? (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={tableHeaderStyle}>User</th>
+                          {(allGames[currentRound] || []).map(game => (
+                            <th key={game.id} style={tableHeaderStyle}>
+                              {game.homeTeam} vs {game.awayTeam}
+                              {currentRound !== 'nfl' && (
+                                <div style={{ fontSize: '0.8em', color: '#666' }}>
+                                  ({game.points || 1} pts)
+                                </div>
+                              )}
+                              {!isGameLocked(game.startTime) && (
+                                <div style={{ fontSize: '0.8em', color: '#dc3545' }}>
+                                  Picks hidden until game starts
+                                </div>
+                              )}
+                            </th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {Object.entries(userPicks).map(([userId, userData]) => (
+                          <tr key={userId}>
+                            <td style={tableCellStyle}>
+                              {userData.displayName || userData.username}
+                            </td>
+                            {(allGames[currentRound] || []).map(game => (
+                              <td key={game.id} style={tableCellStyle}>
+                                {isGameLocked(game.startTime) 
+                                  ? currentRound === 'nfl'
+                                    ? `${userData.picks[currentRound]?.[game.id]?.team || '-'} (${userData.picks[currentRound]?.[game.id]?.points || '-'})`
+                                    : (userData.picks[currentRound]?.[game.id] || '-')
+                                  : '🔒'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                    No games available for {currentRound}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="leaderboard" style={{
@@ -579,10 +602,53 @@ function App() {
                 borderRadius: '8px'
               }}>
                 <h2 style={{ marginBottom: '20px' }}>Leaderboard</h2>
+                
+                {/* Total Points Section */}
+                <h3 style={{ marginBottom: '15px', color: '#007bff' }}>Overall Standings</h3>
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
-                    points: calculatePoints(userId)
+                    points: calculatePoints(userId, 'total')
+                  }))
+                  .sort((a, b) => b.points - a.points)
+                  .map((userData, index) => (
+                    <div key={userData.name} style={{
+                      padding: '10px',
+                      borderBottom: '1px solid #eee',
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}>
+                      <span>{index + 1}. {userData.name}</span>
+                      <span>{userData.points} points</span>
+                    </div>
+                  ))}
+              
+                {/* College Points Section */}
+                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#28a745' }}>College Standings</h3>
+                {Object.entries(userPicks)
+                  .map(([userId, userData]) => ({
+                    name: userData.displayName || userData.username,
+                    points: calculatePoints(userId, 'college')
+                  }))
+                  .sort((a, b) => b.points - a.points)
+                  .map((userData, index) => (
+                    <div key={userData.name} style={{
+                      padding: '10px',
+                      borderBottom: '1px solid #eee',
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}>
+                      <span>{index + 1}. {userData.name}</span>
+                      <span>{userData.points} points</span>
+                    </div>
+                  ))}
+              
+                {/* NFL Points Section */}
+                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#dc3545' }}>NFL Confidence Standings</h3>
+                {Object.entries(userPicks)
+                  .map(([userId, userData]) => ({
+                    name: userData.displayName || userData.username,
+                    points: calculatePoints(userId, 'nfl')
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (

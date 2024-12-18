@@ -14,7 +14,7 @@ function AdminPanel() {
 
   // Load all games for management
   useEffect(() => {
-    const rounds = ['round1', 'round2', 'round3'];
+    const rounds = ['round1', 'round2', 'round3', 'round4', 'nfl'];
     const unsubscribers = rounds.map(roundId => {
       const gamesRef = doc(db, 'games', roundId);
       return onSnapshot(gamesRef, (doc) => {
@@ -96,6 +96,7 @@ function AdminPanel() {
               <option value="round1">Round 1</option>
               <option value="round2">Round 2</option>
               <option value="round3">Round 3</option>
+              <option value="round4">Round 4</option>
               <option value="nfl">NFL Confidence</option>
             </select>
           </label>
@@ -205,7 +206,7 @@ function AdminPanel() {
       {showGameManager && (
         <div style={{ marginTop: '20px' }}>
             <h3>Manage Game Results</h3>
-            {['round1', 'round2', 'round3', 'nfl'].map(roundId => (  // Added 'nfl' here
+            {['round1', 'round2', 'round3', 'round4', 'nfl'].map(roundId => (
             <div key={roundId} style={{ marginBottom: '20px' }}>
                 <h4 style={{ marginBottom: '10px' }}>
                 {roundId === 'nfl' ? 'NFL Confidence' : `Round ${roundId.slice(-1)}`}

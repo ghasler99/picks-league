@@ -3,6 +3,7 @@ import { auth, db } from './firebase';
 import Auth from './components/Auth';
 import AdminPanel from './components/AdminPanel';
 import { doc, setDoc, getDoc, onSnapshot, collection } from 'firebase/firestore';
+import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -48,7 +49,7 @@ function App() {
   }, []);
 
 
-  // Load all users' data
+  // Load all users' data - FIXED TO HANDLE MISSING EMAIL
   useEffect(() => {
     const usersRef = collection(db, 'users');
     const unsubscribe = onSnapshot(usersRef, (snapshot) => {
@@ -56,7 +57,7 @@ function App() {
       snapshot.forEach(doc => {
         const data = doc.data();
         picks[doc.id] = {
-          username: data.username || data.email.split('@')[0],
+          username: data.username || (data.email ? data.email.split('@')[0] : 'Unknown'),
           displayName: data.displayName || '',
           picks: data.picks || {}
         };
@@ -213,12 +214,12 @@ function App() {
   };
 
   return (
-    <div className="App" style={{padding: '20px'}}>
+    <div className="App">
       {!user ? (
         <Auth />
       ) : (
         <>
-          <header style={{ padding: '20px', background: '#f0f0f0' }}>
+          <header className="App-header">
             {/* Top bar with logout */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
               <button
@@ -243,62 +244,29 @@ function App() {
             </div>
 
             {/* Navigation tabs */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              gap: '10px',
-              marginBottom: '20px'
-            }}>
+            <div className="nav-tabs">
               <button
                 onClick={() => setView('picks')}
-                style={{
-                  padding: '10px 20px',
-                  background: view === 'picks' ? '#007bff' : '#e9ecef',
-                  color: view === 'picks' ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className={`nav-tab ${view === 'picks' ? 'active' : ''}`}
               >
                 Make Picks
               </button>
               <button
                 onClick={() => setView('view-picks')}
-                style={{
-                  padding: '10px 20px',
-                  background: view === 'view-picks' ? '#007bff' : '#e9ecef',
-                  color: view === 'view-picks' ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className={`nav-tab ${view === 'view-picks' ? 'active' : ''}`}
               >
                 View All Picks
               </button>
               <button
                 onClick={() => setView('leaderboard')}
-                style={{
-                  padding: '10px 20px',
-                  background: view === 'leaderboard' ? '#007bff' : '#e9ecef',
-                  color: view === 'leaderboard' ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className={`nav-tab ${view === 'leaderboard' ? 'active' : ''}`}
               >
                 Leaderboard
               </button>
               {isAdmin && (
                 <button
                   onClick={() => setView('admin')}
-                  style={{
-                    padding: '10px 20px',
-                    background: view === 'admin' ? '#007bff' : '#e9ecef',
-                    color: view === 'admin' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`nav-tab ${view === 'admin' ? 'active' : ''}`}
                 >
                   Admin Panel
                 </button>
@@ -307,69 +275,34 @@ function App() {
 
             {/* Round selector (show in both picks and view-picks views) */}
             {(view === 'picks' || view === 'view-picks') && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <div className="round-selector">
                 <button
                   onClick={() => setCurrentRound('round1')}
-                  style={{
-                    padding: '8px 16px',
-                    background: currentRound === 'round1' ? '#28a745' : '#e9ecef',
-                    color: currentRound === 'round1' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`round-button ${currentRound === 'round1' ? 'active' : ''}`}
                 >
                   Round 1
                 </button>
                 <button
                   onClick={() => setCurrentRound('round2')}
-                  style={{
-                    padding: '8px 16px',
-                    background: currentRound === 'round2' ? '#28a745' : '#e9ecef',
-                    color: currentRound === 'round2' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`round-button ${currentRound === 'round2' ? 'active' : ''}`}
                 >
                   Round 2
                 </button>
                 <button
                   onClick={() => setCurrentRound('round3')}
-                  style={{
-                    padding: '8px 16px',
-                    background: currentRound === 'round3' ? '#28a745' : '#e9ecef',
-                    color: currentRound === 'round3' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`round-button ${currentRound === 'round3' ? 'active' : ''}`}
                 >
                   Round 3
                 </button>
                 <button
                   onClick={() => setCurrentRound('round4')}
-                  style={{
-                    padding: '8px 16px',
-                    background: currentRound === 'round4' ? '#28a745' : '#e9ecef',
-                    color: currentRound === 'round4' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`round-button ${currentRound === 'round4' ? 'active' : ''}`}
                 >
                   Round 4
                 </button>
                 <button
                   onClick={() => setCurrentRound('nfl')}
-                  style={{
-                    padding: '8px 16px',
-                    background: currentRound === 'nfl' ? '#28a745' : '#e9ecef',
-                    color: currentRound === 'nfl' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`round-button ${currentRound === 'nfl' ? 'active' : ''}`}
                 >
                   NFL Confidence
                 </button>
@@ -377,86 +310,92 @@ function App() {
             )}
           </header>
           
-          <main style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+          <main className="content-container">
             {view === 'admin' ? (
               <AdminPanel />
             ) : view === 'picks' ? (
               <div className="games-list">
                 {(allGames[currentRound] || []).map(game => (
                   currentRound === 'nfl' ? (
-                    <div key={game.id} style={{ 
-                      padding: '20px', 
-                      marginBottom: '20px', 
-                      border: '1px solid #ddd',
-                      borderRadius: '8px'
+                    <div key={game.id} className="game-card" style={{
+                      background: `linear-gradient(90deg, ${game.homeTeamColor || '#007bff'}55 0%, ${game.homeTeamColor || '#007bff'}33 40%, #ffffff 50%, ${game.awayTeamColor || '#dc3545'}33 60%, ${game.awayTeamColor || '#dc3545'}55 100%)`
                     }}>
                       <div style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between',
-                        marginBottom: '10px'
+                        marginBottom: '15px'
                       }}>
-                        <span>
+                        <span style={{ fontWeight: '600', fontSize: '1.1em' }}>
                           {game.homeTeam} vs {game.awayTeam}
                         </span>
                         <div style={{ textAlign: 'right' }}>
-                          <div>{new Date(game.startTime).toLocaleString('en-US', {
-                            timeZone: 'America/Chicago',
-                            timeZoneName: 'short'
-                          })}</div>
+                          <div style={{ fontSize: '0.9em', color: '#666' }}>
+                            {new Date(game.startTime).toLocaleString('en-US', {
+                              timeZone: 'America/Chicago',
+                              timeZoneName: 'short'
+                            })}
+                          </div>
                           {isGameLocked(game.startTime) && (
-                            <div style={{ color: '#dc3545', fontSize: '20px', marginTop: '5px' }}>
-                              🔒
-                            </div>
+                            <div className="lock-icon">🔒</div>
                           )}
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ flex: 1 }}>
-                          <button
-                            onClick={() => handleNFLPick(game.id, game.homeTeam)}
-                            disabled={isGameLocked(game.startTime)}
-                            style={{
-                              width: '100%',
-                              padding: '8px 16px',
-                              background: picks[currentRound]?.[game.id]?.team === game.homeTeam ? '#007bff' : '#e9ecef',
-                              color: picks[currentRound]?.[game.id]?.team === game.homeTeam ? 'white' : 'black',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: isGameLocked(game.startTime) ? 'not-allowed' : 'pointer',
-                              opacity: isGameLocked(game.startTime) ? 0.65 : 1
-                            }}
-                          >
-                            {game.homeTeam}
-                          </button>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <button
-                            onClick={() => handleNFLPick(game.id, game.awayTeam)}
-                            disabled={isGameLocked(game.startTime)}
-                            style={{
-                              width: '100%',
-                              padding: '8px 16px',
-                              background: picks[currentRound]?.[game.id]?.team === game.awayTeam ? '#007bff' : '#e9ecef',
-                              color: picks[currentRound]?.[game.id]?.team === game.awayTeam ? 'white' : 'black',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: isGameLocked(game.startTime) ? 'not-allowed' : 'pointer',
-                              opacity: isGameLocked(game.startTime) ? 0.65 : 1
-                            }}
-                          >
-                            {game.awayTeam}
-                          </button>
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleNFLPick(game.id, game.homeTeam)}
+                          disabled={isGameLocked(game.startTime)}
+                          className="pick-button"
+                          style={{
+                            flex: '1',
+                            minWidth: '150px',
+                            background: picks[currentRound]?.[game.id]?.team === game.homeTeam 
+                              ? '#333'
+                              : '#ffffff',
+                            color: picks[currentRound]?.[game.id]?.team === game.homeTeam 
+                              ? 'white' 
+                              : '#333',
+                            borderColor: picks[currentRound]?.[game.id]?.team === game.homeTeam
+                              ? '#333'
+                              : '#ddd',
+                            fontWeight: picks[currentRound]?.[game.id]?.team === game.homeTeam ? '700' : '600',
+                          }}
+                        >
+                          {game.homeTeam}
+                        </button>
+                        <button
+                          onClick={() => handleNFLPick(game.id, game.awayTeam)}
+                          disabled={isGameLocked(game.startTime)}
+                          className="pick-button"
+                          style={{
+                            flex: '1',
+                            minWidth: '150px',
+                            background: picks[currentRound]?.[game.id]?.team === game.awayTeam 
+                              ? '#333'
+                              : '#ffffff',
+                            color: picks[currentRound]?.[game.id]?.team === game.awayTeam 
+                              ? 'white' 
+                              : '#333',
+                            borderColor: picks[currentRound]?.[game.id]?.team === game.awayTeam
+                              ? '#333'
+                              : '#ddd',
+                            fontWeight: picks[currentRound]?.[game.id]?.team === game.awayTeam ? '700' : '600',
+                          }}
+                        >
+                          {game.awayTeam}
+                        </button>
                         {picks[currentRound]?.[game.id]?.team && (
                           <select
                             value={picks[currentRound]?.[game.id]?.points || ''}
                             onChange={(e) => handleConfidencePoints(game.id, parseInt(e.target.value))}
                             disabled={isGameLocked(game.startTime)}
                             style={{
-                              padding: '8px',
-                              borderRadius: '4px',
-                              border: '1px solid #ddd'
+                              padding: '12px',
+                              borderRadius: '8px',
+                              border: '2px solid #333',
+                              fontSize: '16px',
+                              fontWeight: '600',
+                              backgroundColor: '#fff'
                             }}
                           >
                             <option value="" disabled>Select Points</option>
@@ -475,46 +414,48 @@ function App() {
                       </div>
                     </div>
                   ) : (
-                    <div key={game.id} style={{ 
-                      padding: '20px', 
-                      marginBottom: '20px', 
-                      border: '1px solid #ddd',
-                      borderRadius: '8px'
+                    <div key={game.id} className="game-card" style={{
+                      background: `linear-gradient(90deg, ${game.homeTeamColor || '#007bff'}55 0%, ${game.homeTeamColor || '#007bff'}33 40%, #ffffff 50%, ${game.awayTeamColor || '#dc3545'}33 60%, ${game.awayTeamColor || '#dc3545'}55 100%)`
                     }}>
                       <div style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between',
-                        marginBottom: '10px'
+                        marginBottom: '15px'
                       }}>
-                        <span>
+                        <span style={{ fontWeight: '600', fontSize: '1.1em' }}>
                           {game.homeTeam} ({game.spread > 0 ? '+' : ''}{game.spread}) vs {game.awayTeam}
-                          <span style={{ marginLeft: '10px', color: '#666' }}>
+                          <span style={{ marginLeft: '15px', color: '#666', fontSize: '0.9em' }}>
                             Points: {game.points || 1}
                           </span>
                         </span>
                         <div style={{ textAlign: 'right' }}>
-                          <div>{new Date(game.startTime).toLocaleString('en-US')} CST</div>
+                          <div style={{ fontSize: '0.9em', color: '#666' }}>
+                            {new Date(game.startTime).toLocaleString('en-US')} CST
+                          </div>
                           {isGameLocked(game.startTime) && (
-                            <div style={{ color: '#dc3545', fontSize: '20px', marginTop: '5px' }}>
-                              🔒
-                            </div>
+                            <div className="lock-icon">🔒</div>
                           )}
                         </div>
                       </div>
                       
-                      <div>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => handlePick(game.id, game.homeTeam)}
                           disabled={isGameLocked(game.startTime)}
+                          className="pick-button"
                           style={{
-                            marginRight: '10px',
-                            padding: '8px 16px',
-                            background: picks[currentRound]?.[game.id] === game.homeTeam ? '#007bff' : '#e9ecef',
-                            color: picks[currentRound]?.[game.id] === game.homeTeam ? 'white' : 'black',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: isGameLocked(game.startTime) ? 'not-allowed' : 'pointer',
-                            opacity: isGameLocked(game.startTime) ? 0.65 : 1
+                            flex: '1',
+                            minWidth: '150px',
+                            background: picks[currentRound]?.[game.id] === game.homeTeam 
+                              ? '#333'
+                              : '#ffffff',
+                            color: picks[currentRound]?.[game.id] === game.homeTeam 
+                              ? 'white' 
+                              : '#333',
+                            borderColor: picks[currentRound]?.[game.id] === game.homeTeam
+                              ? '#333'
+                              : '#ddd',
+                            fontWeight: picks[currentRound]?.[game.id] === game.homeTeam ? '700' : '600',
                           }}
                         >
                           {game.homeTeam}
@@ -522,14 +463,20 @@ function App() {
                         <button
                           onClick={() => handlePick(game.id, game.awayTeam)}
                           disabled={isGameLocked(game.startTime)}
+                          className="pick-button"
                           style={{
-                            padding: '8px 16px',
-                            background: picks[currentRound]?.[game.id] === game.awayTeam ? '#007bff' : '#e9ecef',
-                            color: picks[currentRound]?.[game.id] === game.awayTeam ? 'white' : 'black',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: isGameLocked(game.startTime) ? 'not-allowed' : 'pointer',
-                            opacity: isGameLocked(game.startTime) ? 0.65 : 1
+                            flex: '1',
+                            minWidth: '150px',
+                            background: picks[currentRound]?.[game.id] === game.awayTeam 
+                              ? '#333'
+                              : '#ffffff',
+                            color: picks[currentRound]?.[game.id] === game.awayTeam 
+                              ? 'white' 
+                              : '#333',
+                            borderColor: picks[currentRound]?.[game.id] === game.awayTeam
+                              ? '#333'
+                              : '#ddd',
+                            fontWeight: picks[currentRound]?.[game.id] === game.awayTeam ? '700' : '600',
                           }}
                         >
                           {game.awayTeam}
@@ -540,28 +487,31 @@ function App() {
                 ))}
               </div>
             ) : view === 'view-picks' ? (
-              <div className="picks-grid" style={{
+              <div style={{
+                backgroundColor: '#fff',
                 padding: '20px',
-                border: '1px solid #ddd',
-                borderRadius: '8px'
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
               }}>
-                <h2 style={{ marginBottom: '20px' }}>All Picks - {currentRound}</h2>
+                <h2 style={{ marginBottom: '20px', color: '#333' }}>
+                  All Picks - {currentRound === 'nfl' ? 'NFL Confidence' : `Round ${currentRound.replace('round', '')}`}
+                </h2>
                 {allGames[currentRound]?.length > 0 ? (
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table>
                       <thead>
                         <tr>
-                          <th style={tableHeaderStyle}>User</th>
+                          <th>User</th>
                           {(allGames[currentRound] || []).map(game => (
-                            <th key={game.id} style={tableHeaderStyle}>
+                            <th key={game.id}>
                               {game.homeTeam} vs {game.awayTeam}
                               {currentRound !== 'nfl' && (
-                                <div style={{ fontSize: '0.8em', color: '#666' }}>
+                                <div style={{ fontSize: '0.8em', color: '#666', fontWeight: 'normal' }}>
                                   ({game.points || 1} pts)
                                 </div>
                               )}
                               {!isGameLocked(game.startTime) && (
-                                <div style={{ fontSize: '0.8em', color: '#dc3545' }}>
+                                <div style={{ fontSize: '0.8em', color: '#dc3545', fontWeight: 'normal' }}>
                                   Picks hidden until game starts
                                 </div>
                               )}
@@ -572,39 +522,52 @@ function App() {
                       <tbody>
                         {Object.entries(userPicks).map(([userId, userData]) => (
                           <tr key={userId}>
-                            <td style={tableCellStyle}>
+                            <td style={{ fontWeight: '600' }}>
                               {userData.displayName || userData.username}
                             </td>
-                            {(allGames[currentRound] || []).map(game => (
-                              <td key={game.id} style={tableCellStyle}>
-                                {isGameLocked(game.startTime) 
-                                  ? currentRound === 'nfl'
-                                    ? `${userData.picks[currentRound]?.[game.id]?.team || '-'} (${userData.picks[currentRound]?.[game.id]?.points || '-'})`
-                                    : (userData.picks[currentRound]?.[game.id] || '-')
-                                  : '🔒'}
-                              </td>
-                            ))}
+                            {(allGames[currentRound] || []).map(game => {
+                              const userPick = currentRound === 'nfl' 
+                                ? userData.picks[currentRound]?.[game.id]?.team 
+                                : userData.picks[currentRound]?.[game.id];
+                              const pickColor = userPick === game.homeTeam 
+                                ? game.homeTeamColor 
+                                : userPick === game.awayTeam 
+                                  ? game.awayTeamColor 
+                                  : null;
+                              
+                              return (
+                                <td key={game.id} style={{
+                                  background: isGameLocked(game.startTime) && pickColor
+                                    ? `linear-gradient(135deg, ${pickColor}44 0%, ${pickColor}22 100%)` 
+                                    : 'transparent',
+                                  color: '#333',
+                                  fontWeight: isGameLocked(game.startTime) && pickColor ? '600' : 'normal'
+                                }}>
+                                  {isGameLocked(game.startTime) 
+                                    ? currentRound === 'nfl'
+                                      ? `${userData.picks[currentRound]?.[game.id]?.team || '-'} (${userData.picks[currentRound]?.[game.id]?.points || '-'})`
+                                      : (userData.picks[currentRound]?.[game.id] || '-')
+                                    : '🔒'}
+                                </td>
+                              );
+                            })}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                    No games available for {currentRound}
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                    No games available for {currentRound === 'nfl' ? 'NFL Confidence' : `Round ${currentRound.replace('round', '')}`}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="leaderboard" style={{
-                padding: '20px',
-                border: '1px solid #ddd',
-                borderRadius: '8px'
-              }}>
-                <h2 style={{ marginBottom: '20px' }}>Leaderboard</h2>
+              <div className="leaderboard">
+                <h2>Leaderboard</h2>
                 
                 {/* Total Points Section */}
-                <h3 style={{ marginBottom: '15px', color: '#007bff' }}>Overall Standings</h3>
+                <h3 style={{ color: '#333' }}>Overall Standings</h3>
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
@@ -612,19 +575,14 @@ function App() {
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (
-                    <div key={userData.name} style={{
-                      padding: '10px',
-                      borderBottom: '1px solid #eee',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}>
+                    <div key={userData.name} className="leaderboard-item">
                       <span>{index + 1}. {userData.name}</span>
-                      <span>{userData.points} points</span>
+                      <span style={{ fontWeight: '600' }}>{userData.points} points</span>
                     </div>
                   ))}
               
                 {/* College Points Section */}
-                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#28a745' }}>College Standings</h3>
+                <h3 style={{ color: '#333' }}>College Standings</h3>
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
@@ -632,19 +590,14 @@ function App() {
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (
-                    <div key={userData.name} style={{
-                      padding: '10px',
-                      borderBottom: '1px solid #eee',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}>
+                    <div key={userData.name} className="leaderboard-item">
                       <span>{index + 1}. {userData.name}</span>
-                      <span>{userData.points} points</span>
+                      <span style={{ fontWeight: '600' }}>{userData.points} points</span>
                     </div>
                   ))}
               
                 {/* NFL Points Section */}
-                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#dc3545' }}>NFL Confidence Standings</h3>
+                <h3 style={{ color: '#333' }}>NFL Confidence Standings</h3>
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
@@ -652,14 +605,9 @@ function App() {
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (
-                    <div key={userData.name} style={{
-                      padding: '10px',
-                      borderBottom: '1px solid #eee',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}>
+                    <div key={userData.name} className="leaderboard-item">
                       <span>{index + 1}. {userData.name}</span>
-                      <span>{userData.points} points</span>
+                      <span style={{ fontWeight: '600' }}>{userData.points} points</span>
                     </div>
                   ))}
               </div>
@@ -670,17 +618,5 @@ function App() {
     </div>
   );
 }
-
-const tableHeaderStyle = {
-  padding: '12px',
-  backgroundColor: '#f8f9fa',
-  borderBottom: '2px solid #dee2e6',
-  textAlign: 'left'
-};
-
-const tableCellStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #dee2e6'
-};
 
 export default App;

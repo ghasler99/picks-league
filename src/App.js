@@ -510,6 +510,16 @@ function App() {
                                   ({game.points || 1} pts)
                                 </div>
                               )}
+                              {game.winner && (
+                                <div style={{ 
+                                  fontSize: '0.85em', 
+                                  color: '#28a745', 
+                                  fontWeight: '600',
+                                  marginTop: '5px'
+                                }}>
+                                  ✓ Winner: {game.winner}
+                                </div>
+                              )}
                               {!isGameLocked(game.startTime) && (
                                 <div style={{ fontSize: '0.8em', color: '#dc3545', fontWeight: 'normal' }}>
                                   Picks hidden until game starts

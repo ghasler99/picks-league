@@ -159,6 +159,51 @@ function App() {
     return totalPoints;
   };
 
+  const calculateMaxCollegePoints = (userId) => {
+    const currentPoints = calculatePoints(userId, 'college');
+    let remainingPoints = 0;
+
+    // Sum points from all undecided college games
+    ['round1', 'round2', 'round3', 'round4'].forEach(round => {
+      (allGames[round] || []).forEach(game => {
+        if (!game.winner) {
+          remainingPoints += (game.points || 1);
+        }
+      });
+    });
+
+    return currentPoints + remainingPoints;
+  };
+
+  const calculateMaxNFLPoints = (userId) => {
+    const userPickData = userPicks[userId];
+    if (!userPickData) return 0;
+
+    const currentPoints = calculatePoints(userId, 'nfl');
+    
+    // Find all point values that have been "spent" on decided games
+    const usedPoints = new Set();
+    const nflPicks = userPickData.picks['nfl'] || {};
+
+    Object.keys(nflPicks).forEach(gameId => {
+      const game = allGames['nfl']?.find(g => g.id.toString() === gameId.toString());
+      // If this game has a winner, that point value is "used"
+      if (game && game.winner && nflPicks[gameId].points) {
+        usedPoints.add(nflPicks[gameId].points);
+      }
+    });
+
+    // Sum all point values (1-13) that haven't been used on decided games
+    let remainingPoints = 0;
+    for (let i = 1; i <= 13; i++) {
+      if (!usedPoints.has(i)) {
+        remainingPoints += i;
+      }
+    }
+
+    return currentPoints + remainingPoints;
+  };
+
   const handleNFLPick = async (gameId, team) => {
     if (!user) return;
   
@@ -581,13 +626,19 @@ function App() {
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
-                    points: calculatePoints(userId, 'total')
+                    points: calculatePoints(userId, 'total'),
+                    maxPoints: calculateMaxCollegePoints(userId) + calculateMaxNFLPoints(userId)
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (
                     <div key={userData.name} className="leaderboard-item">
                       <span>{index + 1}. {userData.name}</span>
-                      <span style={{ fontWeight: '600' }}>{userData.points} points</span>
+                      <span style={{ fontWeight: '600' }}>
+                        {userData.points} points
+                        <span style={{ color: '#666', fontWeight: '400', marginLeft: '8px' }}>
+                          (max: {userData.maxPoints})
+                        </span>
+                      </span>
                     </div>
                   ))}
               
@@ -611,13 +662,19 @@ function App() {
                 {Object.entries(userPicks)
                   .map(([userId, userData]) => ({
                     name: userData.displayName || userData.username,
-                    points: calculatePoints(userId, 'nfl')
+                    points: calculatePoints(userId, 'nfl'),
+                    maxPoints: calculateMaxNFLPoints(userId)
                   }))
                   .sort((a, b) => b.points - a.points)
                   .map((userData, index) => (
                     <div key={userData.name} className="leaderboard-item">
                       <span>{index + 1}. {userData.name}</span>
-                      <span style={{ fontWeight: '600' }}>{userData.points} points</span>
+                      <span style={{ fontWeight: '600' }}>
+                        {userData.points} points
+                        <span style={{ color: '#666', fontWeight: '400', marginLeft: '8px' }}>
+                          (max: {userData.maxPoints})
+                        </span>
+                      </span>
                     </div>
                   ))}
               </div>
